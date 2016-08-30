@@ -6,6 +6,8 @@ import inspect
 import unittest
 from subprocess import Popen, PIPE
 
+from multiprocessing import cpu_count
+
 from types import FunctionType, ModuleType
 from six.moves import cStringIO
 
@@ -295,6 +297,10 @@ class Test(object):
                 self.load1m, self.load5m, self.load15m = (0.0, 0.0, 0.0)
             else:
                 self.load1m, self.load5m, self.load15m = os.getloadavg()
+                ncpu = cpu_count()
+                self.load1m = self.load1m/ncpu
+                self.load5m = self.load5m/ncpu
+                self.load15m = self.load15m/ncpu
 
         finally:
             sys.path = sys.path[1:]
