@@ -44,10 +44,6 @@ if __name__ == '__main__':
             total_mem_usage = sum(r.memory_usage for r in results)
             test.memory_usage = total_mem_usage
 
-            test.load1m = sum(r.load1m for r in results)/comm.size
-            test.load5m = sum(r.load5m for r in results)/comm.size
-            test.load15m = sum(r.load15m for r in results)/comm.size
-
             # check for errors and record error message
             for r in results:
                 if test.status != 'FAIL' and r.status in ('SKIP', 'FAIL'):
