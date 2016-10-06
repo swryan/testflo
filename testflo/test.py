@@ -4,12 +4,10 @@ import time
 import traceback
 from inspect import isclass
 import pickle
-
 from subprocess import Popen, PIPE
 
 from types import FunctionType, ModuleType
 from six.moves import cStringIO
-
 from six import PY2, PY3
 
 from unittest import TestCase, SkipTest
