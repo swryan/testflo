@@ -10,6 +10,10 @@ procs=$2
 cmd=${@:3}
 testspec=$5
 
+if [ $procs -eq 0 ]; then
+  procs=1
+fi
+
 #
 # build job name from testspec
 #
@@ -45,25 +49,21 @@ if [ $alloc_procs -lt $procs ]; then
   alloc_procs=$(($nodes * $procs_per_node))
 fi
 
-echo $nodes
-echo $alloc_procs
-
 queues="-q "
 qprefix="mdao.q@mdao"
 for i in $(seq 1 $nodes); do
-  echo $i
   queues="$queues$qprefix$i"
   if [ $i -ne $nodes ]; then
     queues="$queues,"
   fi
 done
 
-echo $queues
-
 #
 # submit job using qsub
 #
 
+echo job requires $procs CPU\(s\), allocating $nodes node\(s\) with $alloc_procs CPUs
+echo qsub command: qsub -pe ompi $alloc_procs $queues $jobfile
 qsub -pe ompi $alloc_procs $queues $jobfile
 
 #
