@@ -6,6 +6,7 @@
 #
 # process args
 #
+
 procs=$2
 cmd=${@:3}
 testspec=$5
@@ -17,29 +18,33 @@ fi
 #
 # build job name from testspec
 #
+
 name=${testspec##*\.}
 jobfile="$name-$BASHPID.job"
 
 #
 # build job script
 #
+
 echo "#!/bin/bash"         >$jobfile
 echo "#$ -N $name"        >>$jobfile
 echo "#$ -cwd"            >>$jobfile
 echo "#$ -S /bin/bash"    >>$jobfile
 echo "#$ -V"              >>$jobfile
 if (( $procs > 1 )) ; then
-    echo "#$ -pe ompi $procs" >>$jobfile
     echo "mpirun -n \$NSLOTS $cmd" >>$jobfile
 else
     echo "$cmd" >>$jobfile
 fi
   
+echo \n
 cat $jobfile
+echo \n
 
 #
 # calculate required nodes, procs to allocate & queues
 #
+
 procs_per_node=20
 nodes=$(($procs/$procs_per_node))
 alloc_procs=$(($nodes * $procs_per_node))
@@ -69,4 +74,5 @@ qsub -pe ompi $alloc_procs $queues $jobfile
 #
 # clean up
 #
+
 #rm -f $jobfile
