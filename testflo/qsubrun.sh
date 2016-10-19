@@ -31,11 +31,40 @@ else
     echo "$cmd" >>$jobfile
 fi
   
+cat $jobfile
+
+#
+# calculate required nodes, procs to allocate & queues
+#
+procs_per_node=20
+nodes=$(($procs/$procs_per_node))
+alloc_procs=$(($nodes * $procs_per_node))
+
+if [ $alloc_procs -lt $procs ]; then
+  nodes=$(($nodes + 1))
+  alloc_procs=$(($nodes * $procs_per_node))
+fi
+
+echo $nodes
+echo $alloc_procs
+
+queues="-q "
+qprefix="mdao.q@mdao"
+for i in $(seq 1 $nodes); do
+  echo $i
+  queues="$queues$qprefix$i"
+  if [ $i -ne $nodes ]; then
+    queues="$queues,"
+  fi
+done
+
+echo $queues
+
 #
 # submit job using qsub
 #
-cat $jobfile
-qsub $jobfile
+
+qsub -pe ompi $alloc_procs $queues $jobfile
 
 #
 # clean up
