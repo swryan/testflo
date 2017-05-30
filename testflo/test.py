@@ -3,7 +3,6 @@ import sys
 import time
 import traceback
 from inspect import isclass
-import pickle
 from subprocess import Popen, PIPE
 
 from types import FunctionType, ModuleType
@@ -170,7 +169,8 @@ class Test(object):
 
         add_queue_to_env(queue)
 
-        p = Popen(cmd, stdout=PIPE, stderr=PIPE, env=os.environ)
+        p = Popen(cmd, stdout=PIPE, stderr=PIPE, env=os.environ,
+                  universal_newlines=True)  # text mode
         out, err = p.communicate()
         if self.nocapture:
             sys.stdout.write(out)
@@ -248,7 +248,8 @@ class Test(object):
 
             add_queue_to_env(queue)
 
-            p = Popen(cmd, stdout=PIPE, stderr=PIPE, env=os.environ)
+            p = Popen(cmd, stdout=PIPE, stderr=PIPE, env=os.environ,
+                      universal_newlines=True)  # text mode
             out, err = p.communicate()
             if self.nocapture:
                 sys.stdout.write(out)
