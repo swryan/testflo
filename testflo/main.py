@@ -28,21 +28,17 @@ import os
 import sys
 import six
 import time
-import traceback
-import subprocess
-import multiprocessing
 
-from fnmatch import fnmatch
+from fnmatch import fnmatch, fnmatchcase
 
-from testflo.runner import ConcurrentTestRunner, TestRunner
-from testflo.test import Test
+from testflo.runner import ConcurrentTestRunner
 from testflo.printer import ResultPrinter
 from testflo.benchmark import BenchmarkWriter
 from testflo.summary import ResultSummary
 from testflo.discover import TestDiscoverer
 from testflo.filters import TimeFilter, FailFilter
 
-from testflo.util import read_config_file, read_test_file, _get_parser
+from testflo.util import read_config_file, read_test_file
 from testflo.cover import setup_coverage, finalize_coverage
 from testflo.options import get_options
 from testflo.qman import get_server_queue
@@ -123,15 +119,30 @@ skip_dirs=site-packages,
 
     setup_coverage(options)
 
+    if options.noreport:
+        report_file = open(os.devnull, 'a')
+    else:
+        report_file = open(options.outfile, 'w')
+
+    if not options.test_glob:
+        options.test_glob = ['test*']
+
+    def func_matcher(funcname):
+        for pattern in options.test_glob:
+            if fnmatchcase(funcname, pattern):
+                return True
+        return False
+
     if options.benchmark:
         options.num_procs = 1
         options.isolated = True
         discoverer = TestDiscoverer(module_pattern=six.text_type('benchmark*.py'),
-                                    func_pattern=six.text_type('benchmark*'),
+                                    func_match=lambda f: fnmatchcase(f, 'benchmark*'),
                                     dir_exclude=dir_exclude)
         benchmark_file = open(options.benchmarkfile, 'a')
     else:
-        discoverer = TestDiscoverer(dir_exclude=dir_exclude)
+        discoverer = TestDiscoverer(dir_exclude=dir_exclude,
+                                    func_match=func_matcher)
         benchmark_file = open(os.devnull, 'a')
 
     retval = 0
@@ -142,7 +153,7 @@ skip_dirs=site-packages,
     else:
         manager, queue = (None, None)
 
-    with open(options.outfile, 'w') as report, benchmark_file as bdata:
+    with report_file as report, benchmark_file as bdata:
         pipeline = [
             discoverer.get_iter,
         ]

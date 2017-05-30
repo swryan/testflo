@@ -16,9 +16,6 @@ try:
 except ImportError:
     pass
 
-from multiprocessing.connection import arbitrary_address
-import socket
-
 from fnmatch import fnmatch
 from os.path import join, dirname, basename, isfile,  abspath, split, splitext
 
@@ -110,6 +107,11 @@ def _get_parser():
 
     parser.add_argument('tests', metavar='test', nargs='*',
                         help='A test method, test case, module, or directory to run.')
+
+    parser.add_argument('-m', '--match', '--testmatch', action='append', dest='test_glob',
+                        metavar='GLOB',
+                        help='Pattern to use for test discovery. Multiple patterns are allowed.',
+                        default=[])
 
     return parser
 
@@ -349,6 +351,9 @@ def read_config_file(cfgfile, options):
 
     if config.has_option('testflo', 'num_procs'):
         options.num_procs = int(config.get('testflo', 'num_procs'))
+
+    if config.has_option('testflo', 'noreport'):
+        options.noreport = bool(config.get('testflo', 'noreport'))
 
 
 def get_memory_usage():
