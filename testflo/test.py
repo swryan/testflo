@@ -273,6 +273,24 @@ class Test(object):
 
         return result
 
+    def _spawn_mpi(self, queue):
+
+        args = [
+            os.path.join(os.path.dirname(__file__), 'mpispawn.py'),
+            self.spec
+        ]
+
+        maxp = self.nprocs
+        info = MPI.Info.Create()
+
+        comm = MPI.COMM_SELF.Spawn(sys.executable,
+                                   args=args,
+                                   maxprocs=maxp,
+                                   info=info)
+
+        result = comm.recv(None)
+        return result
+
     def run(self, queue=None):
         """Runs the test, assuming status is not already known."""
         if self.status is not None:
@@ -282,8 +300,11 @@ class Test(object):
         if queue is not None:
             if self.qsub:
                 return self._run_qsub(queue)
-            elif MPI is not None and self.mpi and self.nprocs > 0:
-                return self._run_mpi(queue)
+            elif MPI is not None:
+                if options.mpispawn:
+                    return self._spawn_mpi(queue)
+                elif self.mpi and self.nprocs > 0:
+                    return self._run_mpi(queue)
             elif self.isolated:
                 return self._run_isolated(queue)
 
@@ -463,6 +484,7 @@ def _parse_test_path(testspec):
                             objname)
 
     return (mod, testcase, funcname)
+
 
 def _try_call(func):
     """Calls the given method, captures stdout and stderr,
