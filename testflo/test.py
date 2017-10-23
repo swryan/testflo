@@ -1,9 +1,12 @@
+from __future__ import print_function
+
 import os
 import sys
 import time
 import traceback
 from inspect import isclass
 from subprocess import Popen, PIPE
+from tempfile import mkstemp
 
 from types import FunctionType, ModuleType
 from six.moves import cStringIO
@@ -104,6 +107,7 @@ class Test(object):
         self.isolated = options.isolated
         self.qsub = options.qsub
         self.mpi = not options.nompi
+        self.timeout = options.timeout
         self.expected_fail = False
         self.test_dir = os.path.dirname(testspec.split(':',1)[0])
         self._mod_fixture_first = False
@@ -158,6 +162,73 @@ class Test(object):
 
         return mod, testcase, funcname, nprocs
 
+    def _run_sub(self, cmd, queue):
+        """
+        Run a command in a subprocess.
+        """
+        try:
+            add_queue_to_env(queue)
+
+            if self.nocapture:
+                out = sys.stdout
+            else:
+                out = open(os.devnull, 'w')
+
+            errfd, tmperr = mkstemp()
+            err = os.fdopen(errfd, 'w')
+
+            p = Popen(cmd, stdout=out, stderr=err, env=os.environ,
+                      universal_newlines=True)  # text mode
+            count = 0
+            timedout = False
+
+            if self.timeout < 0.0:  # infinite timeout
+                p.wait()
+            else:
+                poll_interval = 0.2
+                while p.poll() is None:
+                    if count * poll_interval > self.timeout:
+                        p.terminate()
+                        timedout = True
+                        break
+                    time.sleep(poll_interval)
+                    count += 1
+
+            err.close()
+
+            with open(tmperr, 'r') as f:
+                errmsg = f.read()
+            os.remove(tmperr)
+
+            os.environ['TESTFLO_QUEUE'] = ''
+
+            if timedout:
+                result = self
+                self.status = 'FAIL'
+                self.err_msg = 'TIMEOUT after %s sec. ' % self.timeout
+                if errmsg:
+                    self.err_msg += errmsg
+            else:
+                if p.returncode != 0:
+                    print(errmsg)
+                result = queue.get()
+        except:
+            # we generally shouldn't get here, but just in case,
+            # handle it so that the main process doesn't hang at the
+            # end when it tries to join all of the concurrent processes.
+            self.status = 'FAIL'
+            self.err_msg = traceback.format_exc()
+            result = self
+
+            err.close()
+        finally:
+            if not self.nocapture:
+                out.close()
+            sys.stdout.flush()
+            sys.stderr.flush()
+
+        return result
+
     def _run_isolated(self, queue):
         """This runs the test in a subprocess,
         then returns the Test object.
@@ -167,18 +238,16 @@ class Test(object):
                os.path.join(os.path.dirname(__file__), 'isolatedrun.py'),
                self.spec]
 
-        add_queue_to_env(queue)
+        try:
+            result = self._run_sub(cmd, queue)
+        except:
+            # we generally shouldn't get here, but just in case,
+            # handle it so that the main process doesn't hang at the
+            # end when it tries to join all of the concurrent processes.
+            self.status = 'FAIL'
+            self.err_msg = traceback.format_exc()
+            result = self
 
-        p = Popen(cmd, stdout=PIPE, stderr=PIPE, env=os.environ,
-                  universal_newlines=True)  # text mode
-        out, err = p.communicate()
-        if self.nocapture:
-            sys.stdout.write(out)
-            sys.stderr.write(err)
-
-        os.environ['TESTFLO_QUEUE'] = ''
-
-        result = queue.get()
         result.isolated = True
 
         return result
@@ -246,18 +315,7 @@ class Test(object):
                    os.path.join(os.path.dirname(__file__), 'mpirun.py'),
                    self.spec] + _get_testflo_subproc_args()
 
-            add_queue_to_env(queue)
-
-            p = Popen(cmd, stdout=PIPE, stderr=PIPE, env=os.environ,
-                      universal_newlines=True)  # text mode
-            out, err = p.communicate()
-            if self.nocapture:
-                sys.stdout.write(out)
-                sys.stderr.write(err)
-
-            os.environ['TESTFLO_QUEUE'] = ''
-
-            result = queue.get()
+            result = self._run_sub(cmd, queue)
 
         except:
             # we generally shouldn't get here, but just in case,
@@ -266,10 +324,6 @@ class Test(object):
             self.status = 'FAIL'
             self.err_msg = traceback.format_exc()
             result = self
-
-        finally:
-            sys.stdout.flush()
-            sys.stderr.flush()
 
         return result
 
