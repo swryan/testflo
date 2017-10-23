@@ -355,7 +355,7 @@ class Test(object):
             if self.qsub:
                 return self._run_qsub(queue)
             elif MPI is not None:
-                if options.mpispawn:
+                if options.mpispawn and self.nprocs > 0:
                     return self._spawn_mpi(queue)
                 elif self.mpi and self.nprocs > 0:
                     return self._run_mpi(queue)
