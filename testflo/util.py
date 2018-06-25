@@ -25,6 +25,7 @@ from testflo.cover import start_coverage, stop_coverage
 
 _store = {}
 
+
 def _get_parser():
     """Returns a parser to handle command line args."""
 
@@ -62,7 +63,7 @@ def _get_parser():
                         help="Limit output to a single character for each test.")
     parser.add_argument('--dryrun', action='store_true', dest='dryrun',
                         help="Don't actually run tests, but print "
-                          "which tests would have been run.")
+                             "which tests would have been run.")
     parser.add_argument('--pre_announce', action='store_true', dest='pre_announce',
                         help="Announce the name of each test before it runs. This "
                              "can help track down a hanging test. This automatically sets -n 1.")
@@ -86,8 +87,8 @@ def _get_parser():
     parser.add_argument('--coverpkg', action='append', dest='coverpkgs',
                         metavar='PKG',
                         help="Add the given package to the coverage list. You"
-                              " can use this option multiple times to cover"
-                              " multiple packages.")
+                             " can use this option multiple times to cover"
+                             " multiple packages.")
     parser.add_argument('--cover-omit', action='append', dest='cover_omits',
                         metavar='FILE',
                         help="Add a file name pattern to remove it from coverage.")
@@ -118,16 +119,17 @@ def _get_parser():
 
     return parser
 
+
 def _get_testflo_subproc_args():
     """Gets the testflo args that should be used in subprocesses."""
 
     cmdset = set([
-      '--nocapture',
-      '-s',
-      '--coverpkg',
-      '--coverage',
-      '--coverage-html',
-      '--cover-omit',
+        '--nocapture',
+        '-s',
+        '--coverpkg',
+        '--coverage',
+        '--coverage-html',
+        '--cover-omit',
     ])
 
     keep = []
@@ -138,13 +140,13 @@ def _get_testflo_subproc_args():
         arg = args[i]
         if arg.split('=',1)[0] in cmdset:
             keep.append(arg)
-            if ((arg.startswith('--coverpkg') or arg.startswith('--cover-omit'))
-                        and '=' not in arg):
+            if ((arg.startswith('--coverpkg') or arg.startswith('--cover-omit')) and '=' not in arg):
                 i += 1
                 keep.append(args[i])
         i += 1
 
     return keep
+
 
 def _file_gen(dname, fmatch=bool, dmatch=None):
     """A generator returning files under the given directory, with optional
@@ -379,6 +381,7 @@ def get_memory_usage():
                 return mem/k
         except:
             return 0.
+
 
 def elapsed_str(elapsed):
     """return a string of the form hh:mm:sec"""

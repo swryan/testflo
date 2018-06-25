@@ -30,6 +30,11 @@ try:
 except ImportError:
     MPI = None
 
+try:
+    from memory_profiler import memory_usage
+except ImportError:
+    memory_usage = None
+
 options = get_options()
 
 
@@ -90,15 +95,16 @@ class Test(object):
         self.spec = testspec
         self.status = status
         self.err_msg = err_msg
-        self.memory_usage = 0
         self.nprocs = 0
         self.start_time = 0
         self.end_time = 0
         self.load1m = 0.0
         self.load5m = 0.0
         self.load15m = 0.0
+        self.memory_usage = 0.0
         self.nocapture = options.nocapture
         self.isolated = options.isolated
+        self.benchmark = options.benchmark
         self.mpi = not options.nompi
         self.timeout = options.timeout
         self.expected_fail = False
@@ -172,15 +178,26 @@ class Test(object):
 
             p = Popen(cmd, stdout=out, stderr=err, env=os.environ,
                       universal_newlines=True)  # text mode
+
+            timeout = None if self.timeout < 0.0 else self.timeout
+
+            # if benchmarking, get maximum memory usage over the duration of the run
+            if self.benchmark and memory_usage is not None:
+                max_mem = memory_usage(p, max_usage=True,
+                                       include_children=True, multiprocess=True,
+                                       timeout=timeout)
+                if timeout is not None:
+                    timeout = 0.0  # timed out while collecting memory usage
+
             count = 0
             timedout = False
 
-            if self.timeout < 0.0:  # infinite timeout
+            if timeout is None:  # infinite timeout
                 p.wait()
             else:
                 poll_interval = 0.2
                 while p.poll() is None:
-                    if count * poll_interval > self.timeout:
+                    if count * poll_interval > timeout:
                         p.terminate()
                         timedout = True
                         break
@@ -219,6 +236,10 @@ class Test(object):
                 out.close()
             sys.stdout.flush()
             sys.stderr.flush()
+
+            # if we have max memory usage then report it as our memory usage
+            if self.benchmark and memory_usage is not None:
+                result.memory_usage = max_mem
 
         return result
 
@@ -378,9 +399,9 @@ class Test(object):
                     _try_call(mod_teardown)
 
                 self.end_time = time.time()
+                self.memory_usage = get_memory_usage()
                 self.status = status
                 self.err_msg = errstream.getvalue()
-                self.memory_usage = get_memory_usage()
                 self.expected_fail = expected or expected2 or expected3
 
                 if sys.platform == 'win32':
@@ -459,6 +480,7 @@ def _parse_test_path(testspec):
                             objname)
 
     return (mod, testcase, funcname)
+
 
 def _try_call(func):
     """Calls the given method, captures stdout and stderr,
