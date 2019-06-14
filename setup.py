@@ -1,15 +1,21 @@
+from setuptools import setup
 
-from distutils.core import setup
+import re
+
+__version__ = re.findall(
+    r"""__version__ = ["']+([0-9\.]*)["']+""",
+    open('testflo/__init__.py').read(),
+)[0]
 
 setup(name='testflo',
-      version='1.3.1',
+      version=__version__,
       description="A simple flow-based testing framework",
       long_description="""
         usage: testflo [options]
 
         positional arguments:
           test                  A test method, test case, module, or directory to run.
-        
+
         optional arguments:
           -h, --help            show this help message and exit
           -c FILE, --config FILE
