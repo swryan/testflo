@@ -25,9 +25,10 @@ class ResultPrinter(object):
         self.verbose = verbose
 
     def get_iter(self, input_iter):
-        for result in input_iter:
-            self._print_result(result)
-            yield result
+        for tests in input_iter:
+            for test in tests:
+                self._print_result(test)
+                yield test
 
     def _print_result(self, result):
         stream = self.stream
@@ -48,10 +49,12 @@ class ResultPrinter(object):
             else:
                 run_type = ''
 
+            submsg = result.submsg if hasattr(result, 'submsg') else ''
             if result.err_msg:
-                stream.write("%s%s ... %s (%s, %d MB)\n%s\n" % (
+                stream.write("%s%s %s ... %s (%s, %d MB)\n%s\n" % (
                                                      run_type,
                                                      result.spec,
+                                                     submsg,
                                                      result.status,
                                                      stats, result.memory_usage,
                                                      result.err_msg))

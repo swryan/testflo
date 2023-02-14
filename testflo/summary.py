@@ -10,7 +10,7 @@ class ResultSummary(object):
     def __init__(self, options, stream=sys.stdout):
         self.stream = stream
         self.options = options
-        self._start_time = time.time()
+        self._start_time = time.perf_counter()
 
     def get_test_name(self, test):
         if self.options.full_path:
@@ -27,45 +27,44 @@ class ResultSummary(object):
 
         write = self.stream.write
 
-        for test in input_iter:
-            total += 1
+        for tests in input_iter:
+            for test in tests:
+                total += 1
 
-            if test.status == 'OK':
-                if test.expected_fail:
-                    fails.append(self.get_test_name(test))
-                else:
-                    oks += 1
-                test_sum_time += (test.end_time-test.start_time)
-            elif test.status == 'FAIL':
-                if test.expected_fail:
-                    oks += 1
-                else:
-                    fails.append(self.get_test_name(test))
-                test_sum_time += (test.end_time-test.start_time)
-            elif test.status == 'SKIP':
-                skips.append(self.get_test_name(test))
+                if test.status == 'OK':
+                    if test.expected_fail:
+                        fails.append(self.get_test_name(test))
+                    else:
+                        oks += 1
+                    test_sum_time += (test.end_time-test.start_time)
+                elif test.status == 'FAIL':
+                    if test.expected_fail:
+                        oks += 1
+                    else:
+                        fails.append(self.get_test_name(test))
+                    test_sum_time += (test.end_time-test.start_time)
+                elif test.status == 'SKIP':
+                    skips.append(self.get_test_name(test))
 
-            yield test
+                yield test
 
         # now summarize the run
         if skips and (self.options.verbose or self.options.show_skipped):
             write("\n\nThe following tests were skipped:\n")
             for s in sorted(skips):
-                write(s)
-                write('\n')
+                print(s, file=self.stream)
 
         if fails:
             write("\n\nThe following tests failed:\n")
             for f in sorted(fails):
-                write(f)
-                write('\n')
+                print(f, file=self.stream)
         else:
             write("\n\nOK")
 
         write("\n\nPassed:  %d\nFailed:  %d\nSkipped: %d\n" %
                             (oks, len(fails), len(skips)))
 
-        wallclock = time.time() - self._start_time
+        wallclock = time.perf_counter() - self._start_time
 
         s = "" if total == 1 else "s"
         if self.options.isolated:

@@ -19,6 +19,7 @@ from testflo.cover import start_coverage, stop_coverage
 
 from testflo.util import get_module, ismethod, get_memory_usage, \
                          get_testpath, _options2args
+from testflo.utresult import UnitTestResult
 from testflo.devnull import DevNull
 
 
@@ -132,9 +133,9 @@ class Test(object):
                         self.isolated = getattr(testcase, 'ISOLATED', False)
 
         if self.err_msg:
-            self.start_time = self.end_time = time.time()
+            self.start_time = self.end_time = time.perf_counter()
 
-    def _run_sub(self, cmd, queue, env):
+    def _run_subproc(self, cmd, queue, env):
         """
         Run a command in a subprocess.
         """
@@ -179,7 +180,7 @@ class Test(object):
                self.spec]
 
         try:
-            result = self._run_sub(cmd, queue, os.environ)
+            result = self._run_subproc(cmd, queue, os.environ)
         except:
             # we generally shouldn't get here, but just in case,
             # handle it so that the main process doesn't hang at the
@@ -188,7 +189,8 @@ class Test(object):
             self.err_msg = traceback.format_exc()
             result = self
 
-        result.isolated = True
+        for test in result:
+            test.isolated = True
 
         return result
 
@@ -205,7 +207,7 @@ class Test(object):
                    os.path.join(os.path.dirname(__file__), 'mpirun.py'),
                    self.spec] + _options2args()
 
-            result = self._run_sub(cmd, queue, os.environ)
+            result = self._run_subproc(cmd, queue, os.environ)
 
         except:
             # we generally shouldn't get here, but just in case,
@@ -215,7 +217,8 @@ class Test(object):
             self.err_msg = traceback.format_exc()
             result = self
 
-        result.mpi = True
+        for test in result:
+            test.mpi = True
 
         return result
 
@@ -265,12 +268,8 @@ class Test(object):
                         parent.comm = MPI.COMM_WORLD
                     else:
                         parent.comm = FakeComm()
-
-                setup = getattr(parent, 'setUp', None)
-                teardown = getattr(parent, 'tearDown', None)
             else:
                 parent = mod
-                setup = teardown = None
 
             if self.options.nocapture:
                 outstream = sys.stdout
@@ -280,6 +279,7 @@ class Test(object):
 
             done = False
             expected = expected2 = expected3 = False
+            subs = []
 
             try:
                 old_err = sys.stderr
@@ -289,7 +289,7 @@ class Test(object):
 
                 start_coverage()
 
-                self.start_time = time.time()
+                self.start_time = time.perf_counter()
 
                 catch_deps = self.options.show_deprecations or self.options.deprecations_report
                 raise_deps = self.options.disallow_deprecations
@@ -320,37 +320,48 @@ class Test(object):
                         tcase_setup = None
                         tcase_teardown = None
 
-                    if tcase_setup:
-                        status, expected = _try_call(tcase_setup)
-                        if status != 'OK':
-                            done = True
-                            tcase_teardown = None
+                    if testcase is None:
+                        if not done:
+                            status, expected2 = _try_call(getattr(parent, funcname))
+                        self.err_msg = errstream.getvalue()
+                    else: # use unittest code to run the test and handle subtests
+                        if tcase_setup:
+                            status, expected = _try_call(tcase_setup)
+                            if status != 'OK':
+                                done = True
+                                tcase_teardown = None
 
-                    # if there's a setUp method, run it
-                    if not done and setup:
-                        status, expected = _try_call(setup)
-                        if status != 'OK':
-                            done = True
+                        result= UnitTestResult()
+                        parent.run(result)
+                        tname, data = result._tests.popitem()
+                        tc, status, err, ut_subtests = data
+                        stream_val = errstream.getvalue()
+                        if stream_val:
+                            stream_val += '\n'
+                        else:
+                            stream_val = ''
+                        if ut_subtests:
+                            for sub, err in ut_subtests:
+                                subtest = SubTest(sub._subDescription(), self.spec, self.options)
+                                subtest.status = status
+                                subtest.err_msg = stream_val + err
+                                subtest.end_time = time.perf_counter()
+                                subtest.memory_usage = get_memory_usage()
+                                subs.append(subtest)
+                        else:
+                            if err:
+                                self.err_msg = stream_val + err
 
-                    if not done:
-                        status, expected2 = _try_call(getattr(parent, funcname))
-
-                    if not done and teardown:
-                        tdstatus, expected3 = _try_call(teardown)
-                        if status == 'OK':
-                            status = tdstatus
+                    self.end_time = time.perf_counter()
+                    self.status = status
+                    self.memory_usage = get_memory_usage()
+                    self.expected_fail = expected or expected2 or expected3
 
                     if tcase_teardown:
                         _try_call(tcase_teardown)
 
                     if mod_teardown:
                         _try_call(mod_teardown)
-
-                    self.end_time = time.time()
-                    self.status = status
-                    self.err_msg = errstream.getvalue()
-                    self.memory_usage = get_memory_usage()
-                    self.expected_fail = expected or expected2 or expected3
 
                     if sys.platform == 'win32':
                         self.load = (0.0, 0.0, 0.0)
@@ -373,6 +384,8 @@ class Test(object):
                 sys.stderr = old_err
                 sys.stdout = old_out
 
+        if subs:
+            return subs
         return self
 
     def elapsed(self):
@@ -391,6 +404,24 @@ class Test(object):
             return "%s: %s\n%s" % (self.spec, self.status, self.err_msg)
         else:
             return "%s: %s" % (self.spec, self.status)
+
+
+class SubTest(Test):
+    """
+    Like a normal Test, but includes subtest info when being stringified.
+
+    Attributes
+    ----------
+    submsg : str
+        String indicating which subtests were involved.
+    """
+
+    def __init__(self, submsg, testspec, options):
+        super().__init__(testspec, options)
+        self.submsg = submsg
+
+    def __str__(self):
+        return "%s: %s %s\n%s" % (self.spec, self.submsg, self.status, self.err_msg)
 
 
 def _parse_test_path(testspec):
@@ -435,10 +466,8 @@ def _try_call(func):
     and returns the status (OK, SKIP, FAIL).
     """
     status = 'OK'
-    if getattr(func, '__unittest_expecting_failure__', False):
-        expected = True
-    else:
-        expected = False
+    expected = getattr(func, '__unittest_expecting_failure__', False)
+
     try:
         func()
     except SkipTest as e:
