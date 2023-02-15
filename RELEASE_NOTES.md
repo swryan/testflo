@@ -1,6 +1,13 @@
 # RELEASE NOTES
 
 ***********************
+# testflo version 1.4.11
+February 15, 2023
+
+- added support for subtests  [#81](https://github.com/OpenMDAO/testflo/pull/81)
+- replaced outdated long_description in setup.py with the contents of README.md [#80](https://github.com/OpenMDAO/testflo/pull/80)
+
+***********************
 # testflo version 1.4.10
 February 8, 2023
 
@@ -8,7 +15,6 @@ February 8, 2023
   --show_deprecations: Display a list of all deprecation warnings encountered in testing.
   --deprecations_report: Generate a deprecations report with the given file name.
   --disallow_deprecations: Raise deprecation warnings as Exceptions.
-
 
 ***********************
 # testflo version 1.4.9
