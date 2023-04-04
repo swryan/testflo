@@ -1,6 +1,12 @@
 # RELEASE NOTES
 
 ***********************
+# testflo version 1.4.12
+April 4, 2023
+
+- fixed bug in benchmark timestamp  [#84](https://github.com/OpenMDAO/testflo/pull/84)
+
+***********************
 # testflo version 1.4.11
 February 15, 2023
 
