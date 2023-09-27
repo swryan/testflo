@@ -246,8 +246,10 @@ skip_dirs=site-packages,
         if options.maxtime > 0:
             pipeline.append(TimeFilter(options.maxtime).get_iter)
 
-        if options.save_fails:
-            pipeline.append(FailFilter().get_iter)
+        if options.save_fails or options.failfile:
+            if options.failfile is None:  # user must have specified -f
+                options.failfile = 'failtests.in'
+            pipeline.append(FailFilter(options.failfile).get_iter)
 
         retval = run_pipeline(tests, pipeline, options.disallow_skipped)
 
