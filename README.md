@@ -1,3 +1,5 @@
+[![PyPI version][1]][2]
+
 testflo
 =======
 
@@ -175,3 +177,6 @@ or install from PYPI using:
 
 If you try it out and find any problems, submit them as issues on github at
 https://github.com/OpenMDAO/testflo.
+
+[1]: https://badge.fury.io/py/testflo.svg "PyPI Version"
+[2]: https://badge.fury.io/py/testflo "testflo @PyPI"

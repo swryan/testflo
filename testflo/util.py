@@ -59,8 +59,11 @@ def _get_parser():
     parser.add_argument('--pre_announce', action='store_true', dest='pre_announce',
                         help="Announce the name of each test before it runs. This "
                              "can help track down a hanging test. This automatically sets -n 1.")
-    parser.add_argument('-f', '--fail', action='store_true', dest='save_fails',
+    parser.add_argument('-f', action='store_true', dest='save_fails',
                         help="Save failed tests to failtests.in file.")
+    parser.add_argument('--fail', action='store', dest='failfile',
+                        metavar='FILE',
+                        help='Path to a file containing testspecs of failed tests.')
     parser.add_argument('--full_path', action='store_true', dest='full_path',
                         help="Display full test specs instead of shortened names.")
     parser.add_argument('-i', '--isolated', action='store_true', dest='isolated',
@@ -111,6 +114,14 @@ def _get_parser():
 
     parser.add_argument('--disallow_skipped', action='store_true', dest='disallow_skipped',
                         help="Return exit code 2 if no tests failed but some tests are skipped.")
+
+    parser.add_argument('--show_deprecations', action='store_true', dest='show_deprecations',
+                        help="Display a list of all deprecation warnings encountered in testing.")
+    parser.add_argument('--deprecations_report', action='store', dest='deprecations_report',
+                        metavar='FILE', default=None,
+                        help='Generate a deprecations report with the given file name.  Default is None.')
+    parser.add_argument('--disallow_deprecations', action='store_true', dest='disallow_deprecations',
+                        help="Raise deprecation warnings as Exceptions.")
 
     parser.add_argument('tests', metavar='test', nargs='*',
                         help='A test method, test case, module, or directory to run. If not '
@@ -474,4 +485,3 @@ def elapsed_str(elapsed):
 # in python3, inspect.ismethod doesn't work as you might expect, so...
 def ismethod(obj):
     return inspect.isfunction(obj) or inspect.ismethod(obj)
-
