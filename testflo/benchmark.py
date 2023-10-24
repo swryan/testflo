@@ -11,9 +11,10 @@ class BenchmarkWriter(object):
         self.stream = stream
 
     def get_iter(self, input_iter):
-        for result in input_iter:
-            self._write_data(result)
-            yield result
+        for tests in input_iter:
+            for result in tests:
+                self._write_data(result)
+                yield result
 
     def _write_data(self, result):
         stream = self.stream
