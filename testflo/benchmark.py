@@ -11,9 +11,17 @@ class BenchmarkWriter(object):
         self.stream = stream
 
     def get_iter(self, input_iter):
-        for result in input_iter:
-            self._write_data(result)
-            yield result
+        for tests in input_iter:
+            first = True
+            for result in tests:
+                if first:
+                    # There will only be multiple results if the test has subTests and
+                    # one or more of them failed. CPU time and memory usage stats are
+                    # for the test as a whole and all results will have the same stats,
+                    # so just use the first one.
+                    self._write_data(result)
+                    first = False
+                yield result
 
     def _write_data(self, result):
         stream = self.stream

@@ -44,15 +44,15 @@ if __name__ == '__main__':
         if comm.rank == 0:
             for r in results:
                 for tst in r:
-                    if not isinstance(r, Test):
+                    if not isinstance(tst, Test):
                         print("\nNot all results gathered are Test objects.  "
                               "You may have out-of-sync collective MPI calls.\n")
                         break
             total_mem_usage = 0.
             for r in results:
                 for tst in r:
-                    if isinstance(r, Test):
-                        total_mem_usage += r.memory_usage
+                    if isinstance(tst, Test):
+                        total_mem_usage += tst.memory_usage
                     break  # subtests don't track their own memory usage, so break after 1st one
             for tst in tests:
                 tst.memory_usage = total_mem_usage
