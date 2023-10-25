@@ -38,7 +38,7 @@ if __name__ == '__main__':
             comm = MPI.COMM_WORLD
             test = Test(sys.argv[1], options)
             test.nocapture = True # so we don't lose stdout
-            tests = test.run()
+            test.run()
         except:
             print(traceback.format_exc())
             test.status = 'FAIL'
@@ -70,4 +70,4 @@ if __name__ == '__main__':
         sys.stderr.flush()
 
         if comm.rank == 0:
-            queue.put(tests)
+            queue.put(test)
