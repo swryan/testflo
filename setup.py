@@ -32,7 +32,7 @@ setup(name='testflo',
       ],
       license='Apache 2.0',
       install_requires=[
-        'coverage<5.0'
+        'coverage>=6.0'
       ],
       packages=['testflo'],
       entry_points="""

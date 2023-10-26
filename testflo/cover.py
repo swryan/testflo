@@ -1,19 +1,73 @@
 """
 Methods to provide code coverage using coverage.py.
 """
-
 import os
 import sys
+import shutil
 import webbrowser
 
 try:
-    from coverage import coverage
+    import coverage
+    from coverage.config import HandyConfigParser
 except ImportError:
     coverage = None
+else:
+    coverage.process_startup()
 
 
 # use to hold a global coverage obj
 _coverobj = None
+
+def _to_ini(lst):
+    if lst:
+        return ','.join(lst)
+    return ''
+
+
+def _write_temp_config(options, rcfile):
+    """
+    Read any .coveragerc file if it exists, and override parts of it then generate our temp config.
+
+    Parameters
+    ----------
+    options : cmd line options
+        Options from the command line parser.
+    rcfile : str
+        The name of our temporary coverage config file.
+    """
+    tmp_cfg = {
+        'run': {
+            'branch': False,
+            'parallel': True,
+            'concurrency': 'multiprocessing',
+        },
+        'report': {
+            'ignore_errors': True,
+            'skip_empty': True,
+            'sort': '-cover',
+        },
+        'html': {
+            'skip_empty': True,
+        }
+    }
+
+    if options.coverpkgs:
+        tmp_cfg['run']['source_pkgs'] = _to_ini(options.coverpkgs)
+
+    if options.cover_omits:
+        tmp_cfg['run']['omit'] = _to_ini(options.cover_omits)
+        tmp_cfg['report']['omit'] = _to_ini(options.cover_omits)
+
+    cfgparser = HandyConfigParser(our_file=True)
+
+    if os.path.isfile('.coveragerc'):
+        cfgparser.read(['.coveragerc'])
+
+    cfgparser.read_dict(tmp_cfg)
+
+    with open(rcfile, 'w') as f:
+        cfgparser.write(f)
+
 
 def setup_coverage(options):
     global _coverobj
@@ -23,8 +77,19 @@ def setup_coverage(options):
         if not options.coverpkgs:
             raise RuntimeError("No packages specified for coverage. "
                                "Use the --coverpkg option to add a package.")
-        _coverobj = coverage(data_suffix=True, source=options.coverpkgs,
-                             omit=options.cover_omits)
+        oldcov = os.path.join(os.getcwd(), '.coverage')
+        if os.path.isfile(oldcov):
+            os.remove(oldcov)
+        covdir = os.path.join(os.getcwd(), '_covdir')
+        if os.path.isdir('_covdir'):
+            shutil.rmtree('_covdir')
+        os.mkdir('_covdir')
+        os.environ['COVERAGE_RUN'] = 'true'
+        os.environ['COVERAGE_RCFILE'] = rcfile = os.path.join(covdir, '_coveragerc_')
+        os.environ['COVERAGE_FILE'] = covfile = os.path.join(covdir, '.coverage')
+        os.environ['COVERAGE_PROCESS_START'] = rcfile
+        _write_temp_config(options, rcfile)
+        _coverobj = coverage.Coverage(data_file=covfile, data_suffix=True, config_file=rcfile)
     return _coverobj
 
 def start_coverage():
@@ -65,10 +130,7 @@ def finalize_coverage(options):
             morfs = list(find_files(dirs, match='*.py', exclude=excl))
 
             _coverobj.combine()
-
-            # write combined data to default filename (as used by coveralls)
-            # (NOTE: get_data() returns None, so using data attribute)
-            _coverobj.data.write_file('.coverage')
+            _coverobj.save()
 
             if options.coverage:
                 _coverobj.report(morfs=morfs)
@@ -81,3 +143,6 @@ def finalize_coverage(options):
                     os.system('open %s' % outfile)
                 else:
                     webbrowser.get().open(outfile)
+
+            shutil.copy(_coverobj.get_data().data_filename(),
+                        os.path.join(os.getcwd(), '.coverage'))

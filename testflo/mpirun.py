@@ -6,15 +6,22 @@ to run an MPI test.
 """
 
 if __name__ == '__main__':
+    try:
+        import coverage
+    except ImportError:
+        pass
+    else:
+        coverage.process_startup()
+
     import sys
     import os
     import traceback
 
+    # when testing OpenMDAO, make sure that MPI is active
     os.environ['OPENMDAO_USE_MPI'] = '1'
 
     from mpi4py import MPI
     from testflo.test import Test
-    from testflo.cover import setup_coverage, save_coverage
     from testflo.qman import get_client_queue
     from testflo.options import get_options
 
@@ -25,46 +32,34 @@ if __name__ == '__main__':
     os.environ['TESTFLO_QUEUE'] = ''
 
     options = get_options()
-    setup_coverage(options)
 
     try:
         try:
             comm = MPI.COMM_WORLD
             test = Test(sys.argv[1], options)
             test.nocapture = True # so we don't lose stdout
-            tests = test.run()
+            test.run()
         except:
             print(traceback.format_exc())
             test.status = 'FAIL'
             test.err_msg = traceback.format_exc()
-            tests = [test]
+        else:
+            # collect results
+            results = comm.gather(test, root=0)
+            if comm.rank == 0:
+                if not all([isinstance(r, Test) for r in results]):
+                    print("\nNot all results gathered are Test objects.  "
+                          "You may have out-of-sync collective MPI calls.\n")
+                total_mem_usage = sum(r.memory_usage for r in results if isinstance(r, Test))
+                test.memory_usage = total_mem_usage
 
-        # collect results
-        results = comm.gather(tests, root=0)
-        if comm.rank == 0:
-            for r in results:
-                for tst in r:
-                    if not isinstance(tst, Test):
-                        print("\nNot all results gathered are Test objects.  "
-                              "You may have out-of-sync collective MPI calls.\n")
-                        break
-            total_mem_usage = 0.
-            for r in results:
-                for tst in r:
-                    if isinstance(tst, Test):
-                        total_mem_usage += tst.memory_usage
-                    break  # subtests don't track their own memory usage, so break after 1st one
-            for tst in tests:
-                tst.memory_usage = total_mem_usage
-
-            # check for errors and record error message
-            for r in results:
-                for test, tst in zip(tests, r):
-                    if test.status != 'FAIL' and tst.status in ('SKIP', 'FAIL'):
-                        test.err_msg = tst.err_msg
-                        test.status = tst.status
-
-        save_coverage()
+                # check for errors and record error message
+                for r in results:
+                    if test.status != 'FAIL' and r.status in ('SKIP', 'FAIL'):
+                        test.err_msg = r.err_msg
+                        test.status = r.status
+                        if r.status == 'FAIL':
+                            break
 
     except Exception:
         test.err_msg = traceback.format_exc()
@@ -75,4 +70,4 @@ if __name__ == '__main__':
         sys.stderr.flush()
 
         if comm.rank == 0:
-            queue.put(tests)
+            queue.put(test)

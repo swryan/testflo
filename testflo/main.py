@@ -29,6 +29,8 @@ import sys
 import time
 import warnings
 import multiprocessing
+import atexit
+import shutil
 
 from fnmatch import fnmatch, fnmatchcase
 
@@ -42,8 +44,7 @@ from testflo.duration import DurationSummary
 from testflo.discover import TestDiscoverer
 from testflo.filters import TimeFilter, FailFilter
 
-from testflo.util import read_config_file, read_test_file, _get_parser
-from testflo.cover import setup_coverage, finalize_coverage
+from testflo.util import read_config_file, read_test_file
 from testflo.options import get_options
 from testflo.qman import get_server_queue
 
@@ -165,7 +166,22 @@ skip_dirs=site-packages,
     # set this so code will know when it's running under testflo
     os.environ['TESTFLO_RUNNING'] = '1'
 
-    setup_coverage(options)
+    if options.coverage or options.coveragehtml:
+        os.environ['TESTFLO_MAIN_PID'] = str(os.getpid())
+        # some coverage files aren't written until atexit of their processes, so put our finalize
+        # routine in atexit before their Coverage._atexit methods are registered so ours will be
+        # executed *after* theirs.
+        def _finalize():
+            if os.getpid() == int(os.environ.get('TESTFLO_MAIN_PID', '0')):
+                from testflo.cover import finalize_coverage
+                finalize_coverage(options)
+                # clean up the temporary dir where we store the interim coverage files from all
+                # of the processes.
+                if os.path.isdir('_covdir'):
+                    shutil.rmtree('_covdir')
+        atexit.register(_finalize)
+        from testflo.cover import setup_coverage
+        setup_coverage(options)
 
     if options.noreport:
         report_file = open(os.devnull, 'a')
@@ -175,17 +191,6 @@ skip_dirs=site-packages,
     if not options.test_glob:
         options.test_glob = ['test*']
 
-    def func_matcher(funcname):
-        for pattern in options.excludes:
-            if fnmatchcase(funcname, pattern):
-                return False
-
-        for pattern in options.test_glob:
-            if fnmatchcase(funcname, pattern):
-                return True
-
-        return False
-
     if options.benchmark:
         options.num_procs = 1
         options.isolated = True
@@ -194,8 +199,18 @@ skip_dirs=site-packages,
                                     dir_exclude=dir_exclude)
         benchmark_file = open(options.benchmarkfile, 'a')
     else:
-        discoverer = TestDiscoverer(options, dir_exclude=dir_exclude,
-                                    func_match=func_matcher)
+        def func_matcher(funcname):
+            for pattern in options.excludes:
+                if fnmatchcase(funcname, pattern):
+                    return False
+
+            for pattern in options.test_glob:
+                if fnmatchcase(funcname, pattern):
+                    return True
+
+            return False
+
+        discoverer = TestDiscoverer(options, dir_exclude=dir_exclude, func_match=func_matcher)
         benchmark_file = open(os.devnull, 'a')
 
     retval = 0
@@ -252,8 +267,6 @@ skip_dirs=site-packages,
             pipeline.append(FailFilter(options.failfile).get_iter)
 
         retval = run_pipeline(tests, pipeline, options.disallow_skipped)
-
-        finalize_coverage(options)
 
         if manager is not None:
             manager.shutdown()

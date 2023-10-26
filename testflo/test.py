@@ -379,8 +379,6 @@ class Test(object):
                             self.deprecations[msg] = dep
 
             finally:
-                stop_coverage()
-
                 sys.stderr = old_err
                 sys.stdout = old_out
 
