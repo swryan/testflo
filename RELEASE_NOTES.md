@@ -1,6 +1,13 @@
 # RELEASE NOTES
 
 ***********************
+# testflo version 1.4.13
+October 27, 2023
+
+- Updated testflo to work with new version (>=6.0) of coverage  [#91](https://github.com/OpenMDAO/testflo/pull/91)
+- Fixed a bug with the benchmark option related to a failed subTest  [#93](https://github.com/OpenMDAO/testflo/pull/93)
+
+***********************
 # testflo version 1.4.12
 April 4, 2023
 
@@ -42,7 +49,7 @@ February 14, 2022
 October 13, 2021
 
 - setting N_PROCS=1 will now run under MPI in OpenMDAO [#60](https://github.com/OpenMDAO/testflo/pull/60)
-- fixed version regex (old one couldn't handle *-dev versions [#59](https://github.com/OpenMDAO/testflo/pull/59)
+- fixed version regex (old one couldn't handle *-dev versions) [#59](https://github.com/OpenMDAO/testflo/pull/59)
 
 ***********************
 # testflo version 1.4.6
