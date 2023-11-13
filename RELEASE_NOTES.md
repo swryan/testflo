@@ -1,6 +1,12 @@
 # RELEASE NOTES
 
 ***********************
+# testflo version 1.4.14
+November 13, 2023
+
+- Fixed a bug with the disallow_skipped option  [#96](https://github.com/OpenMDAO/testflo/pull/96)
+
+***********************
 # testflo version 1.4.13
 October 27, 2023
 
