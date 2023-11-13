@@ -100,7 +100,7 @@ def run_pipeline(source, pipe, disallow_skipped):
 
     if n_failed > 0:
         return_code = 1
-    elif n_skipped > 1 and disallow_skipped:
+    elif n_skipped > 0 and disallow_skipped:
         return_code = 2
     else:
         return_code = 0
