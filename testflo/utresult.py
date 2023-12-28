@@ -76,7 +76,12 @@ class UnitTestResult(unittest.TestResult):
 
     def addSkip(self, test, reason):
         """Called when a test is skipped."""
-        resdata = self._tests[test.id()]
+        # as of Python 3.12.1, startTest is not called before processing skips
+        # we will add the test to our list without calling the super() method
+        if test.id() not in self._tests:
+            resdata = self._tests[test.id()] = _ResultData(test)
+        else:
+            resdata = self._tests[test.id()]
         resdata.status = 'SKIP'
         resdata.error = reason
         super().addSkip(test, reason)
