@@ -1,6 +1,12 @@
 # RELEASE NOTES
 
 ***********************
+# testflo version 1.4.15
+December 28, 2023
+
+- Updated to handle a change in skipped test behavior with Python 3.12.1 [#100](https://github.com/OpenMDAO/testflo/pull/100)
+
+***********************
 # testflo version 1.4.14
 November 13, 2023
 
