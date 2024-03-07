@@ -120,8 +120,6 @@ def main(args=None):
 
     nprocs = options.num_procs
 
-    options.skip_dirs = []
-
     # read user prefs from ~/.testflo file.
     # create one if it doesn't exist
     homedir = os.path.expanduser('~')
@@ -131,6 +129,7 @@ def main(args=None):
             f.write("""[testflo]
 skip_dirs=site-packages,
     dist-packages,
+    __pycache__,
     build,
     _build,
     contrib
