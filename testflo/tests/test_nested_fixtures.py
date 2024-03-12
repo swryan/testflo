@@ -45,19 +45,19 @@ class TestfloTestCaseWFixture2(unittest.TestCase):
 
     @unittest.skip("skipping 2")
     def test_tcase_grouped_skip(self):
-        pass
+        self.fail("This test should have been skipped.")
 
 
 @unittest.skip("skipping a whole testcase...")
 class SkippedTestCase2(unittest.TestCase):
     def test_1(self):
-        pass
+        self.fail("This test should have been skipped.")
 
     def test_2(self):
-        pass
+        self.fail("This test should have been skipped.")
 
     def test_3(self):
-        pass
+        self.fail("This test should have been skipped.")
 
     def test_4(self):
-        pass
+        self.fail("This test should have been skipped.")

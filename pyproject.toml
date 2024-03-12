@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "testflo"
+dynamic = ["version"]
+description = "A simple flow-based testing framework"
+readme = "README.md"
+license = "Apache-2.0"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.5",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: Implementation :: CPython",
+]
+dependencies = [
+    "setuptools",
+    "coverage>=6.0",
+]
+
+[project.scripts]
+testflo = "testflo.main:main"
+
+[tool.hatch.version]
+path = "testflo/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/testflo",
+]
