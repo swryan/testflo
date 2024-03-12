@@ -446,7 +446,9 @@ def read_config_file(cfgfile, options):
                 typ = lambda x: x
 
             if isinstance(action, _AppendAction):
-                setattr(options, name, [typ(s.strip()) for s in optstr.split(',') if s.strip()])
+                oldval =  getattr(options, name)
+                addval = [typ(s.strip()) for s in optstr.split(',') if s.strip()]
+                setattr(options, name, oldval+addval)
             else:
                 setattr(options, name, typ(optstr))
 
