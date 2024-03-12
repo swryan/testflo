@@ -86,7 +86,7 @@ jobs:
 
           if [[ ! -n `grep "Ran 26 tests" testflo_report.out` ]]; then
             echo "Expected 26 tests."
-            exit 7
+            exit 26
           fi
 
           if [[ ! -n `grep "Passed:  7" testflo_report.out` ]]; then
@@ -117,12 +117,7 @@ jobs:
 
           if [[ ! -n `grep "Ran 26 tests using 1 processes" testflo_report.out` ]]; then
             echo "Expected 26 tests on one process."
-            exit 7
-          fi
-
-          if [[ ! -n `grep "Passed:  7" testflo_report.out` ]]; then
-            echo "Expected 7 tests to pass."
-            exit 7
+            exit 26
           fi
 
           if [[ ! -n `grep "Passed:  7" testflo_report.out` ]]; then
