@@ -4,7 +4,7 @@
 # testflo version 1.4.16
 March 13, 2024
 
-- Change build system to hatchling; added a test workflow [#106](https://github.com/OpenMDAO/testflo/pull/106)
+- Changed build system to hatchling; added a test workflow [#106](https://github.com/OpenMDAO/testflo/pull/106)
 - Fixed handling of --skip_dirs arg [#105](https://github.com/OpenMDAO/testflo/pull/105)
 
 ***********************
