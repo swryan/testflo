@@ -111,7 +111,7 @@ jobs:
         run: |
           cd $HOME
 
-          testflo testflo.tests -vs --show_skipped --durations=5 --durations-min=0 --deprecations_report dep.txt || RC=$?
+          testflo testflo.tests -n 1 -vs --show_skipped --durations=5 --durations-min=0 --deprecations_report dep.txt || RC=$?
 
           if [[ $RC -ne 1 ]]; then
             echo "Expected some tests to fail."
