@@ -31,12 +31,12 @@ jobs:
           # test on Ubuntu
           - NAME: Ubuntu Baseline
             OS: ubuntu-latest
-            PY: '3.11'
+            PY: '3.12'
 
           # test on MacOS
           - NAME: MacOS Baseline
             OS: macos-latest
-            PY: '3.11'
+            PY: '3.12'
 
     runs-on: ${{ matrix.OS }}
 
@@ -77,7 +77,7 @@ jobs:
         run: |
           cd $HOME
 
-          testflo testflo.tests || RC=$?
+           testflo testflo.tests -vs --show_skipped --durations=5 --durations-min=0 --deprecations_report dep.txt || RC=$?
 
           if [[ $RC -ne 1 ]]; then
             echo "Expected some tests to fail."
@@ -103,6 +103,8 @@ jobs:
             echo "Expected 11 tests to be skipped."
             exit 11
           fi
+
+          grep "Deprecations Report" dep.txt
 
       - name: Run tests in serial
         run: |

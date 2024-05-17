@@ -341,11 +341,13 @@ class Test(object):
                         else:
                             stream_val = ''
                         if ut_subtests:
+                            end_time = time.perf_counter()
                             for sub, err in ut_subtests:
                                 subtest = SubTest(sub._subDescription(), self.spec, self.options)
                                 subtest.status = status
                                 subtest.err_msg = stream_val + err
-                                subtest.end_time = time.perf_counter()
+                                subtest.start_time = self.start_time
+                                subtest.end_time = end_time
                                 subtest.memory_usage = get_memory_usage()
                                 subs.append(subtest)
                         else:
