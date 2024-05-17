@@ -16,10 +16,11 @@ class DeprecationsReport(object):
 
         deprecations = {}
 
-        for test in input_iter:
-            for msg, locs in test.deprecations.items():
-                deprecations[msg] = deprecations.get(msg, set()) | locs
-            yield test
+        for tests in input_iter:
+            for test in tests:
+                for msg, locs in test.deprecations.items():
+                    deprecations[msg] = deprecations.get(msg, set()) | locs
+                yield test
 
         report = self.generate_report(deprecations)
 
