@@ -1,6 +1,12 @@
 # RELEASE NOTES
 
 ***********************
+# testflo version 1.4.17
+May 20, 2024
+
+- Fixed a couple of bugs related to SubTests [#111](https://github.com/OpenMDAO/testflo/pull/111)
+
+***********************
 # testflo version 1.4.16
 March 13, 2024
 
