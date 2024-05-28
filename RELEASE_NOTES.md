@@ -1,6 +1,12 @@
 # RELEASE NOTES
 
 ***********************
+# testflo version 1.4.18
+May 28, 2024
+
+- Removed setuptools as a dependency [#115](https://github.com/OpenMDAO/testflo/pull/115)
+
+***********************
 # testflo version 1.4.17
 May 20, 2024
 
