@@ -17,7 +17,6 @@ from os.path import join, dirname, basename, isfile,  abspath, split, splitext
 
 from argparse import ArgumentParser, _AppendAction
 
-from testflo.cover import start_coverage, stop_coverage
 
 _store = {}
 

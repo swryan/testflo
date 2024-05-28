@@ -22,7 +22,6 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
 ]
 dependencies = [
-    "setuptools",
     "coverage>=6.0",
 ]
 
