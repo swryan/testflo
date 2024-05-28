@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import os
 import sys
+import shutil
 import time
 import warnings
 import traceback
@@ -23,11 +24,10 @@ from testflo.utresult import UnitTestResult
 from testflo.devnull import DevNull
 
 
-from distutils import spawn
 mpirun_exe = None
-if spawn.find_executable("mpirun") is not None:
+if shutil.which("mpirun") is not None:
     mpirun_exe = "mpirun"
-elif spawn.find_executable("mpiexec") is not None:
+elif shutil.which("mpiexec") is not None:
     mpirun_exe = "mpiexec"
 
 
