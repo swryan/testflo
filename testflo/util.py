@@ -19,6 +19,12 @@ from argparse import ArgumentParser, _AppendAction
 
 from testflo.cover import start_coverage, stop_coverage
 
+# create a copy of sys.path with an extra entry at the beginning so that
+# we can quickly replace the first entry with the curent test's dir rather
+# than constantly copying the whole sys.path
+_testing_path = ['.'] + sys.path
+
+
 _store = {}
 
 
@@ -337,7 +343,11 @@ _mod2file = {}  # keep track of non-pkg files to detect and flag dups
 
 
 def try_import(fname, modpath):
+    global _testing_path
     try:
+        _testing_path[0] = os.path.dirname(fname)
+        old_sys_path = sys.path
+        sys.path = _testing_path
         mod = import_module(modpath)
     except ImportError:
         # this might be a module that's not in the same
@@ -356,6 +366,8 @@ def try_import(fname, modpath):
             del sys.modules[modpath]
         finally:
             sys.path = oldpath
+    finally:
+        sys.path = old_sys_path
 
     return mod
 
