@@ -19,7 +19,7 @@ from unittest.case import _UnexpectedSuccess
 from testflo.cover import start_coverage, stop_coverage
 
 from testflo.util import get_module, ismethod, get_memory_usage, \
-                         get_testpath, _options2args
+                         get_testpath, _options2args, _testing_path
 from testflo.utresult import UnitTestResult
 from testflo.devnull import DevNull
 
@@ -44,12 +44,6 @@ class FakeComm(object):
     def __init__(self):
         self.rank = 0
         self.size = 1
-
-
-# create a copy of sys.path with an extra entry at the beginning so that
-# we can quickly replace the first entry with the curent test's dir rather
-# than constantly copying the whole sys.path
-_testing_path = ['.'] + sys.path
 
 
 @contextmanager
