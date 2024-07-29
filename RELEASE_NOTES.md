@@ -1,6 +1,12 @@
 # RELEASE NOTES
 
 ***********************
+# testflo version 1.4.19
+July 29, 2024
+
+- added current directory to sys.path during try_import to avoid any relative import failures in test files  [#118](https://github.com/OpenMDAO/testflo/pull/118)
+
+***********************
 # testflo version 1.4.18
 May 28, 2024
 
