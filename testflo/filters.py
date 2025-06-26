@@ -40,5 +40,9 @@ class FailFilter(object):
         for result in input_iter:
             if result.status == 'FAIL' and not result.expected_fail:
                 with open(self.outfile, 'a') as f:
-                    print(result.spec, file=f)
+                    if result.nprocs > 1:
+                        spec = f"{result.spec}  # mpi, nprocs={result.nprocs}"
+                    else:
+                        spec = result.spec
+                    print(spec, file=f)
             yield result
