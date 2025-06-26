@@ -63,7 +63,8 @@ def testcontext(test):
         test.err_msg = traceback.format_exc()
     finally:
         sys.path = old_sys_path
-        del os.environ['TESTFLO_SPEC']
+        if 'TESTFLO_SPEC' in os.environ:
+            del os.environ['TESTFLO_SPEC']
 
 
 class Test(object):
