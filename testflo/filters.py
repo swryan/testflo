@@ -1,5 +1,8 @@
 from __future__ import print_function
 
+import os
+
+
 class TimeFilter(object):
     """This iterator saves to the specified output file only those tests
     that complete successfully in max_time seconds or less.  This output
@@ -29,13 +32,17 @@ class FailFilter(object):
         self.outfile = outfile
 
     def get_iter(self, input_iter):
-        fails = []
+        try:
+            os.remove(self.outfile)
+        except OSError:
+            pass
+
         for result in input_iter:
             if result.status == 'FAIL' and not result.expected_fail:
-                fails.append(result.spec)
-            yield result
-
-        if fails:
-            with open(self.outfile, 'w') as f:
-                for spec in sorted(fails):
+                with open(self.outfile, 'a') as f:
+                    if result.nprocs > 1:
+                        spec = f"{result.spec}  # mpi, nprocs={result.nprocs}"
+                    else:
+                        spec = result.spec
                     print(spec, file=f)
+            yield result

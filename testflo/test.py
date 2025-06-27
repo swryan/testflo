@@ -51,6 +51,8 @@ def testcontext(test):
     global _testing_path
     old_sys_path = sys.path
 
+    os.environ['TESTFLO_SPEC'] = test.spec
+
     _testing_path[0] = test.test_dir
     sys.path = _testing_path
 
@@ -61,6 +63,8 @@ def testcontext(test):
         test.err_msg = traceback.format_exc()
     finally:
         sys.path = old_sys_path
+        if 'TESTFLO_SPEC' in os.environ:
+            del os.environ['TESTFLO_SPEC']
 
 
 class Test(object):
